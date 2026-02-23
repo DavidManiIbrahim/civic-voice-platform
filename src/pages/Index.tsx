@@ -4,7 +4,8 @@ import HearingCard from "@/components/HearingCard";
 import StatsCard from "@/components/StatsCard";
 import { Radio, Users, MessageSquare, TrendingUp, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import heroImage from "@/assets/hero-capitol.jpg";
+import heroImage from "/image.png";
+// import heroImage from "@/assets/hero-capitol.jpg";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function Index() {
