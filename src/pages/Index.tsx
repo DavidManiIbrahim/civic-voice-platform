@@ -1,50 +1,26 @@
+import { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
 import HearingCard from "@/components/HearingCard";
 import StatsCard from "@/components/StatsCard";
 import { Radio, Users, MessageSquare, TrendingUp, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-capitol.jpg";
-
-const hearings = [
-  {
-    id: "1",
-    title: "Clean Air Amendment Act — Environmental Impact Review",
-    committee: "Environment & Public Works",
-    date: "Feb 23, 2026 · 10:00 AM",
-    status: "live" as const,
-    viewers: 12847,
-    comments: 342,
-  },
-  {
-    id: "2",
-    title: "Digital Privacy Rights — Consumer Protection Standards",
-    committee: "Commerce & Technology",
-    date: "Feb 24, 2026 · 2:00 PM",
-    status: "upcoming" as const,
-    viewers: 0,
-    comments: 0,
-  },
-  {
-    id: "3",
-    title: "Education Funding Reform — K-12 Budget Allocation",
-    committee: "Education & Labor",
-    date: "Feb 21, 2026",
-    status: "archived" as const,
-    viewers: 8432,
-    comments: 567,
-  },
-  {
-    id: "4",
-    title: "Healthcare Access Act — Rural Hospital Support",
-    committee: "Health & Human Services",
-    date: "Feb 19, 2026",
-    status: "archived" as const,
-    viewers: 15203,
-    comments: 891,
-  },
-];
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Index() {
+  const [hearings, setHearings] = useState<any[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("hearings")
+      .select("*")
+      .order("scheduled_at", { ascending: false })
+      .then(({ data }) => { if (data) setHearings(data); });
+  }, []);
+
+  const liveCount = hearings.filter(h => h.status === "live").length;
+  const totalViewers = hearings.reduce((sum, h) => sum + (h.viewers || 0), 0);
+
   return (
     <Layout>
       {/* Hero */}
@@ -82,9 +58,9 @@ export default function Index() {
       {/* Stats */}
       <section className="container -mt-8 relative z-10">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatsCard icon={<Radio className="h-5 w-5" />} label="Live Sessions" value="3" change="+2 this week" positive />
-          <StatsCard icon={<Users className="h-5 w-5" />} label="Active Viewers" value="12.8K" change="+34% from last hearing" positive />
-          <StatsCard icon={<MessageSquare className="h-5 w-5" />} label="Public Comments" value="1,800" change="+156 today" positive />
+          <StatsCard icon={<Radio className="h-5 w-5" />} label="Live Sessions" value={String(liveCount)} />
+          <StatsCard icon={<Users className="h-5 w-5" />} label="Total Viewers" value={totalViewers.toLocaleString()} />
+          <StatsCard icon={<MessageSquare className="h-5 w-5" />} label="Hearings" value={String(hearings.length)} />
           <StatsCard icon={<TrendingUp className="h-5 w-5" />} label="Engagement Rate" value="78%" change="+5% this month" positive />
         </div>
       </section>

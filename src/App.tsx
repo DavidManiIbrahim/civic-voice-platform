@@ -3,11 +3,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import HearingPage from "./pages/HearingPage";
 import SentimentDashboard from "./pages/SentimentDashboard";
 import PeoplesView from "./pages/PeoplesView";
 import InsightsPage from "./pages/InsightsPage";
+import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -18,14 +20,17 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/hearing" element={<HearingPage />} />
-          <Route path="/sentiment" element={<SentimentDashboard />} />
-          <Route path="/peoples-view" element={<PeoplesView />} />
-          <Route path="/insights" element={<InsightsPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/hearing" element={<HearingPage />} />
+            <Route path="/sentiment" element={<SentimentDashboard />} />
+            <Route path="/peoples-view" element={<PeoplesView />} />
+            <Route path="/insights" element={<InsightsPage />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

@@ -1,9 +1,29 @@
 import Layout from "@/components/Layout";
 import TranscriptPanel from "@/components/TranscriptPanel";
 import CommentPanel from "@/components/CommentPanel";
+import VotePanel from "@/components/VotePanel";
+import CaptionSummary from "@/components/CaptionSummary";
 import { Radio, Users, Clock, Download } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+const MOCK_TRANSCRIPT_TEXT = `Good morning. We're convening today to discuss the proposed Clean Air Amendment Act. Our research shows a 23% reduction in particulate matter is achievable within 5 years. The health benefits alone would save an estimated $4.2 billion annually. What about the economic impact on small manufacturers? We recommend a phased implementation with tax incentives for small businesses. While we support cleaner air goals, the timeline is unrealistic. Our members need at minimum 8 years.`;
 
 export default function HearingPage() {
+  const [hearing, setHearing] = useState<any>(null);
+
+  useEffect(() => {
+    supabase
+      .from("hearings")
+      .select("*")
+      .eq("status", "live")
+      .limit(1)
+      .single()
+      .then(({ data }) => { if (data) setHearing(data); });
+  }, []);
+
+  const hearingId = hearing?.id || "";
+
   return (
     <Layout>
       <div className="container py-6">
@@ -17,15 +37,15 @@ export default function HearingPage() {
               </span>
               LIVE NOW
             </span>
-            <span className="text-sm text-muted-foreground">Environment & Public Works Committee</span>
+            <span className="text-sm text-muted-foreground">{hearing?.committee || "Environment & Public Works Committee"}</span>
           </div>
           <h1 className="font-display text-2xl font-bold text-foreground md:text-3xl">
-            Clean Air Amendment Act — Environmental Impact Review
+            {hearing?.title || "Clean Air Amendment Act — Environmental Impact Review"}
           </h1>
           <div className="mt-2 flex items-center gap-6 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <Users className="h-4 w-4" />
-              12,847 watching
+              {hearing?.viewers?.toLocaleString() || "12,847"} watching
             </span>
             <span className="flex items-center gap-1.5">
               <Clock className="h-4 w-4" />
@@ -42,21 +62,48 @@ export default function HearingPage() {
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Video */}
           <div className="lg:col-span-2">
-            <div className="mb-6 aspect-video overflow-hidden rounded-xl bg-primary">
-              <div className="flex h-full items-center justify-center">
-                <div className="text-center text-primary-foreground">
-                  <Radio className="mx-auto mb-3 h-12 w-12 animate-pulse-slow opacity-60" />
-                  <p className="text-lg font-semibold">Live Stream</p>
-                  <p className="text-sm opacity-70">Hearing in progress — stream placeholder</p>
+            <div className="mb-4 aspect-video overflow-hidden rounded-xl bg-primary">
+              {hearing?.stream_url ? (
+                <iframe
+                  src={hearing.stream_url}
+                  className="h-full w-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title="Live Stream"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center">
+                  <div className="text-center text-primary-foreground">
+                    <Radio className="mx-auto mb-3 h-12 w-12 animate-pulse-slow opacity-60" />
+                    <p className="text-lg font-semibold">Live Stream</p>
+                    <p className="text-sm opacity-70">Hearing in progress — stream placeholder</p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
+
+            {/* Caption Summary */}
+            <div className="mb-4">
+              <CaptionSummary transcriptText={MOCK_TRANSCRIPT_TEXT} />
+            </div>
+
+            {/* Vote */}
+            {hearingId && (
+              <div className="mb-4">
+                <VotePanel hearingId={hearingId} />
+              </div>
+            )}
+
             <TranscriptPanel />
           </div>
 
           {/* Comments */}
           <div className="lg:col-span-1">
-            <CommentPanel />
+            {hearingId ? <CommentPanel hearingId={hearingId} /> : (
+              <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+                Loading comments...
+              </div>
+            )}
           </div>
         </div>
       </div>
