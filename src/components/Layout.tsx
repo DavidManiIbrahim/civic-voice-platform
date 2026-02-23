@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ReactNode } from "react";
 import {
   LayoutDashboard,
@@ -9,8 +9,12 @@ import {
   Menu,
   X,
   Landmark,
+  LogIn,
+  LogOut,
+  User,
 } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -22,7 +26,9 @@ const navItems = [
 
 export default function Layout({ children }: { children: ReactNode }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   return (
     <div className="min-h-screen bg-background font-body">
@@ -59,13 +65,36 @@ export default function Layout({ children }: { children: ReactNode }) {
             })}
           </nav>
 
-          {/* Live indicator */}
-          <div className="hidden items-center gap-2 md:flex">
+          {/* Auth + Live indicator */}
+          <div className="hidden items-center gap-3 md:flex">
             <span className="relative flex h-2.5 w-2.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
               <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-destructive" />
             </span>
             <span className="text-sm font-medium text-destructive">LIVE</span>
+
+            {user ? (
+              <div className="ml-2 flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/20 text-accent">
+                  <User className="h-4 w-4" />
+                </span>
+                <button
+                  onClick={async () => { await signOut(); navigate("/"); }}
+                  className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/auth"
+                className="ml-2 flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-sm font-semibold text-accent-foreground transition-transform hover:scale-105"
+              >
+                <LogIn className="h-4 w-4" />
+                Sign In
+              </Link>
+            )}
           </div>
 
           {/* Mobile menu toggle */}
@@ -98,6 +127,24 @@ export default function Layout({ children }: { children: ReactNode }) {
                 </Link>
               );
             })}
+            {user ? (
+              <button
+                onClick={async () => { await signOut(); setMobileOpen(false); navigate("/"); }}
+                className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground hover:bg-muted"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </button>
+            ) : (
+              <Link
+                to="/auth"
+                onClick={() => setMobileOpen(false)}
+                className="mt-2 flex items-center gap-3 rounded-lg bg-accent px-3 py-3 text-sm font-semibold text-accent-foreground"
+              >
+                <LogIn className="h-4 w-4" />
+                Sign In
+              </Link>
+            )}
           </nav>
         )}
       </header>
