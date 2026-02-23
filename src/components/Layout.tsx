@@ -12,6 +12,7 @@ import {
   LogIn,
   LogOut,
   User,
+  Shield,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,7 +29,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, profile, isAdmin, signOut } = useAuth();
 
   return (
     <div className="min-h-screen bg-background font-body">
@@ -52,17 +53,28 @@ export default function Layout({ children }: { children: ReactNode }) {
                 <Link
                   key={item.to}
                   to={item.to}
-                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                    active
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${active
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
                 >
                   <item.icon className="h-4 w-4" />
                   {item.label}
                 </Link>
               );
             })}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${location.pathname === "/admin"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-accent hover:bg-accent/10"
+                  }`}
+              >
+                <Shield className="h-4 w-4" />
+                Admin
+              </Link>
+            )}
           </nav>
 
           {/* Auth + Live indicator */}
@@ -116,17 +128,29 @@ export default function Layout({ children }: { children: ReactNode }) {
                   key={item.to}
                   to={item.to}
                   onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors ${
-                    active
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors ${active
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
                 >
                   <item.icon className="h-4 w-4" />
                   {item.label}
                 </Link>
               );
             })}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors ${location.pathname === "/admin"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-accent hover:bg-accent/10"
+                  }`}
+              >
+                <Shield className="h-4 w-4" />
+                Admin Console
+              </Link>
+            )}
             {user ? (
               <button
                 onClick={async () => { await signOut(); setMobileOpen(false); navigate("/"); }}
@@ -150,6 +174,6 @@ export default function Layout({ children }: { children: ReactNode }) {
       </header>
 
       <main>{children}</main>
-    </div>
+    </div >
   );
 }

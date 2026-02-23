@@ -10,6 +10,7 @@ import SentimentDashboard from "./pages/SentimentDashboard";
 import PeoplesView from "./pages/PeoplesView";
 import InsightsPage from "./pages/InsightsPage";
 import AuthPage from "./pages/AuthPage";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/sentiment" element={<SentimentDashboard />} />
             <Route path="/peoples-view" element={<PeoplesView />} />
             <Route path="/insights" element={<InsightsPage />} />
+            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
