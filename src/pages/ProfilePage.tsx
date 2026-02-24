@@ -9,12 +9,16 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
+import {
+    useUpdateProfileMutation
+} from "@/hooks/useData";
+
 export default function ProfilePage() {
     const { user, profile, signOut } = useAuth();
     const [displayName, setDisplayName] = useState("");
-    const [loading, setLoading] = useState(false);
     const { toast } = useToast();
     const navigate = useNavigate();
+    const updateProfileMutation = useUpdateProfileMutation();
 
     useEffect(() => {
         if (profile) {
@@ -25,23 +29,11 @@ export default function ProfilePage() {
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) return;
-        setLoading(true);
 
-        const { error } = await supabase
-            .from("profiles")
-            .update({ display_name: displayName })
-            .eq("user_id", user.id);
-
-        setLoading(false);
-        if (!error) {
-            toast({ title: "Profile updated successfully" });
-        } else {
-            toast({
-                title: "Update failed",
-                description: error.message,
-                variant: "destructive"
-            });
-        }
+        updateProfileMutation.mutate({ userId: user.id, display_name: displayName }, {
+            onSuccess: () => toast({ title: "Profile updated successfully" }),
+            onError: (err: any) => toast({ title: "Update failed", description: err.message, variant: "destructive" })
+        });
     };
 
     const handleSignOut = async () => {

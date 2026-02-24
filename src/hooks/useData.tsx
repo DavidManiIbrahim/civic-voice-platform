@@ -17,6 +17,19 @@ export function useHearings() {
     });
 }
 
+export function useCreateHearingMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (newHearing: any) => {
+            const { error } = await supabase.from("hearings").insert([newHearing]);
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["hearings"] });
+        },
+    });
+}
+
 export function useUpdateHearingMutation() {
     const queryClient = useQueryClient();
     return useMutation({
@@ -42,6 +55,22 @@ export function useDeleteHearingMutation() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["hearings"] });
+        },
+    });
+}
+
+export function useUpdateProfileMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ userId, display_name }: { userId: string; display_name: string }) => {
+            const { error } = await supabase
+                .from("profiles")
+                .update({ display_name })
+                .eq("user_id", userId);
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["profiles"] });
         },
     });
 }
@@ -91,10 +120,23 @@ export function useDeleteAnnouncementMutation() {
     });
 }
 
+export function useCreateAnnouncementMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (newAnnouncement: any) => {
+            const { error } = await supabase.from("announcements").insert([newAnnouncement]);
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["announcements"] });
+        },
+    });
+}
+
 export function useAnnouncements(onlyPublished = true) {
     return useQuery({
         queryKey: ["announcements", onlyPublished],
-        queryFn: async () => {
+        queryFn: async (): Promise<Tables<"announcements">[]> => {
             let query = supabase
                 .from("announcements")
                 .select("*")

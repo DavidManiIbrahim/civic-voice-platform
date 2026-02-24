@@ -12,8 +12,9 @@ interface AnnouncementFormProps {
     onSuccess: () => void;
 }
 
+import { useCreateAnnouncementMutation } from "@/hooks/useData";
+
 export default function AnnouncementForm({ onClose, onSuccess }: AnnouncementFormProps) {
-    const [loading, setLoading] = useState(false);
     const { user } = useAuth();
     const [formData, setFormData] = useState({
         title: "",
@@ -21,24 +22,23 @@ export default function AnnouncementForm({ onClose, onSuccess }: AnnouncementFor
         is_published: true
     });
 
+    const createAnnouncementMutation = useCreateAnnouncementMutation();
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) return;
-        setLoading(true);
 
-        const { error } = await supabase.from("announcements").insert([
-            {
-                ...formData,
-                author_id: user.id
+        createAnnouncementMutation.mutate({
+            ...formData,
+            author_id: user.id
+        }, {
+            onSuccess: () => {
+                onSuccess();
+            },
+            onError: (err: any) => {
+                console.error("Error creating post:", err);
             }
-        ]);
-
-        setLoading(false);
-        if (!error) {
-            onSuccess();
-        } else {
-            console.error("Error creating post:", error);
-        }
+        });
     };
 
     return (
@@ -88,9 +88,9 @@ export default function AnnouncementForm({ onClose, onSuccess }: AnnouncementFor
 
                     <div className="flex justify-end gap-3 pt-4">
                         <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                        <Button type="submit" disabled={loading} className="gap-2">
+                        <Button type="submit" disabled={createAnnouncementMutation.isPending} className="gap-2">
                             <Send className="h-4 w-4" />
-                            {loading ? "Posting..." : "Create Post"}
+                            {createAnnouncementMutation.isPending ? "Posting..." : "Create Post"}
                         </Button>
                     </div>
                 </form>

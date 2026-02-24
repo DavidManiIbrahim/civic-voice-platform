@@ -8,6 +8,8 @@ CivicLens is a modern, transparent platform designed to bridge the gap between l
 - **Sentiment Analysis**: AI-powered analysis of public comments to gauge community reaction.
 - **Legislative Insights**: Briefing dashboards for policymakers summarizing key arguments, risks, and public feedback.
 - **Admin Console**: Functional dashboard for administrators to create and manage hearings, and promote users to administrative roles.
+- **User Profiles**: Personalized profiles for citizens to manage their identity and view their engagement.
+- **Performance & Caching**: Efficient data fetching and state management using React Query for a snappy, responsive experience.
 - **Proactive Surveys**: Automatically generated survey questions based on hearing transcripts and public discourse.
 - **Regional Engagement**: Visual data representing engagement and sentiment across different geographic regions.
 

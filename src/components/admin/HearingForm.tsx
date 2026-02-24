@@ -11,8 +11,9 @@ interface HearingFormProps {
     onSuccess: () => void;
 }
 
+import { useCreateHearingMutation } from "@/hooks/useData";
+
 export default function HearingForm({ onClose, onSuccess }: HearingFormProps) {
-    const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         title: "",
         committee: "",
@@ -22,23 +23,22 @@ export default function HearingForm({ onClose, onSuccess }: HearingFormProps) {
         stream_url: ""
     });
 
+    const createHearingMutation = useCreateHearingMutation();
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
 
-        const { error } = await supabase.from("hearings").insert([
-            {
-                ...formData,
-                scheduled_at: new Date(formData.scheduled_at).toISOString(),
+        createHearingMutation.mutate({
+            ...formData,
+            scheduled_at: new Date(formData.scheduled_at).toISOString(),
+        }, {
+            onSuccess: () => {
+                onSuccess();
+            },
+            onError: (err: any) => {
+                console.error("Error creating hearing:", err);
             }
-        ]);
-
-        setLoading(false);
-        if (!error) {
-            onSuccess();
-        } else {
-            console.error("Error creating hearing:", error);
-        }
+        });
     };
 
     return (
@@ -123,8 +123,8 @@ export default function HearingForm({ onClose, onSuccess }: HearingFormProps) {
 
                     <div className="flex justify-end gap-3 pt-4">
                         <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                        <Button type="submit" disabled={loading}>
-                            {loading ? "Creating..." : "Create Hearing"}
+                        <Button type="submit" disabled={createHearingMutation.isPending}>
+                            {createHearingMutation.isPending ? "Creating..." : "Create Hearing"}
                         </Button>
                     </div>
                 </form>
