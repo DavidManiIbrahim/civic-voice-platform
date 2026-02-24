@@ -11,6 +11,7 @@ CivicLens is a modern, transparent platform designed to bridge the gap between l
 - **User Profiles**: Personalized profiles for citizens to manage their identity and view their engagement.
 - **Performance & Caching**: Efficient data fetching and state management using React Query for a snappy, responsive experience.
 - **Proactive Surveys**: Automatically generated survey questions based on hearing transcripts and public discourse.
+- **Local Caching**: Robust data persistence using React Query and LocalStorage, allowing for offline access and faster subsequent loads.
 - **Regional Engagement**: Visual data representing engagement and sentiment across different geographic regions.
 
 ## Project info
