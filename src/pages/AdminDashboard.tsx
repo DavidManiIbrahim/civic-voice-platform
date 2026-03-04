@@ -140,19 +140,9 @@ export default function AdminDashboard() {
 
     return (
         <Layout>
-            <div className="relative min-h-[calc(100vh-64px)] w-full overflow-hidden">
-                {/* Background Image with Overlay */}
-                <div className="absolute inset-0 z-0">
-                    <img
-                        src="/images/PARLIAMENT-4-1-678x381.jpg"
-                        alt="Background"
-                        className="h-full w-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-background/80 backdrop-blur-[2px]" />
-                </div>
-
+            <div className="flex min-h-[calc(100vh-64px)] bg-muted/30">
                 {/* Sidebar */}
-                <aside className="w-64 border-r border-border bg-card hidden md:block relative z-10">
+                <aside className="w-64 border-r border-border bg-card hidden md:block">
                     <nav className="p-4 space-y-1">
                         {sidebarItems.map((item) => (
                             <button
@@ -171,7 +161,7 @@ export default function AdminDashboard() {
                 </aside>
 
                 {/* Main Content */}
-                <main className="relative z-10 flex-1 p-4 md:p-8">
+                <main className="flex-1 p-4 md:p-8">
                     {/* Mobile Tabs */}
                     <div className="mb-6 flex overflow-x-auto pb-2 md:hidden">
                         <div className="flex gap-2">

@@ -30,6 +30,7 @@ export default function CommentPanel({ hearingId }: CommentPanelProps) {
   const [sending, setSending] = useState(false);
   const [hasDraft, setHasDraft] = useState(!!draftedComments[hearingId]);
   const { recordComment } = useAppStats();
+  const [commentCache, setCommentCache] = useLocalStorage<Record<string, Comment[]>>("app:comments-cache", {});
 
   useEffect(() => {
     setNewComment(draftedComments[hearingId] || "");
@@ -54,7 +55,9 @@ export default function CommentPanel({ hearingId }: CommentPanelProps) {
       .eq("hearing_id", hearingId as any)
       .order("created_at", { ascending: false });
     if (data) {
-      setComments(data as any);
+      const formatted = data as any[];
+      setComments(formatted);
+      setCommentCache(prev => ({ ...prev, [hearingId]: formatted }));
     }
   };
 
