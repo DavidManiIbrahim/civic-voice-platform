@@ -348,7 +348,7 @@ export default function AdminDashboard() {
                                                     <th className="px-6 py-4 font-semibold">Citizen</th>
                                                     <th className="px-6 py-4 font-semibold">Email</th>
                                                     <th className="px-6 py-4 font-semibold">Role</th>
-                                                    <th className="px-6 py-4 font-semibold">Comments</th>
+                                                    {/* <th className="px-6 py-4 font-semibold">Comments</th> */}
                                                     <th className="px-6 py-4 font-semibold">Joined at</th>
                                                     <th className="px-6 py-4 font-semibold text-right">Actions</th>
                                                 </tr>
@@ -383,7 +383,7 @@ export default function AdminDashboard() {
                                                                 </span>
                                                             </td>
                                                             <td className="px-6 py-4 text-xs">
-                                                                {totalComments} ({posPct}%+ / {negPct}%- / {neuPct}%0)
+                                                                {/* {totalComments} ({posPct}%+ / {negPct}%- / {neuPct}%0) */}
                                                             </td>
                                                             <td className="px-6 py-4 text-muted-foreground text-xs">
                                                                 {new Date(u.created_at).toLocaleString()}

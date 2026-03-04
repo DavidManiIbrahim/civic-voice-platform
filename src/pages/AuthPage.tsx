@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Landmark, LogIn, UserPlus } from "lucide-react";
-import BgImage from "/images/image.png";
+import BgImage from "/images/PARLIAMENT-4-1-678x381.jpg";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AuthPage() {
