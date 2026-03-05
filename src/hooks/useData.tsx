@@ -114,6 +114,20 @@ export function useComments() {
     });
 }
 
+export function useAnnouncements() {
+    return useQuery({
+        queryKey: ["announcements"],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from("announcements")
+                .select("*")
+                .order("created_at", { ascending: false });
+            if (error) throw error;
+            return data as any[];
+        },
+    });
+}
+
 export function useDeleteProfileMutation() {
     const queryClient = useQueryClient();
     return useMutation({
@@ -154,6 +168,20 @@ export function useTranscripts(hearingId?: string) {
             return data as any[];
         },
         enabled: !!hearingId,
+    });
+}
+
+export function useTrackInteractionMutation() {
+    return useMutation({
+        mutationFn: async ({ userId, hearingId, type }: { userId: string; hearingId: string; type: string }) => {
+            const { error } = await supabase.from("user_interactions").insert({
+                user_id: userId,
+                hearing_id: hearingId,
+                interaction_type: type,
+            } as any);
+            // Ignore unique constraint errors (already tracked)
+            if (error && error.code !== "23505") throw error;
+        },
     });
 }
 

@@ -20,9 +20,6 @@ import { useAuth } from "@/hooks/useAuth";
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/hearing", label: "Live Hearing", icon: Radio },
-  { to: "/sentiment", label: "Sentiment", icon: BarChart3 },
-  { to: "/peoples-view", label: "People's View", icon: Users },
-  { to: "/insights", label: "Insights", icon: FileText },
 ];
 
 export default function Layout({ children }: { children: ReactNode }) {

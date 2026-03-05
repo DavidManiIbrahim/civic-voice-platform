@@ -38,6 +38,7 @@ import {
     useHearings,
     useProfiles,
     useComments,
+    useAnnouncements,
     useUpdateHearingMutation,
     useDeleteHearingMutation,
     useUpdateRoleMutation,
@@ -46,12 +47,13 @@ import {
     useRecalculateSentimentMutation,
 } from "@/hooks/useData";
 
-type Tab = "overview" | "hearings" | "users" | "announcements" | "analytics";
-
-
 import AdminAuth from "@/components/admin/AdminAuth";
+import AdminPeoplesView from "@/components/admin/AdminPeoplesView";
+import AdminInsights from "@/components/admin/AdminInsights";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { useEffect } from "react";
+
+type Tab = "overview" | "hearings" | "users" | "announcements" | "peoples_view" | "insights" | "sentiment";
 
 export default function AdminDashboard() {
     const { user, isAdmin, loading } = useAuth();
@@ -65,29 +67,40 @@ export default function AdminDashboard() {
     const { toast } = useToast();
 
     // Caching
-    const [hearings, setHearings] = useLocalStorage<any[]>("admin:hearings", []);
-    const [users, setUsers] = useLocalStorage<any[]>("admin:users", []);
-    const [comments, setComments] = useLocalStorage<any[]>("admin:comments", []);
+    const [cachedHearings, setCachedHearings] = useLocalStorage<any[]>("app:hearings", []);
+    const [cachedUsers, setCachedUsers] = useLocalStorage<any[]>("app:users", []);
+    const [cachedComments, setCachedComments] = useLocalStorage<any[]>("app:comments", []);
+    const [cachedAnnouncements, setCachedAnnouncements] = useLocalStorage<any[]>("app:announcements", []);
 
     // Queries
     const { data: hearingsData, isLoading: loadingHearings } = useHearings();
     const { data: usersData, isLoading: loadingProfiles } = useProfiles();
     const { data: commentsData } = useComments();
+    const { data: announcementsData, isLoading: loadingAnnouncements } = useAnnouncements();
 
     useEffect(() => {
-        if (hearingsData && hearingsData.length > 0) setHearings(hearingsData);
-    }, [hearingsData]);
+        if (hearingsData && hearingsData.length > 0) setCachedHearings(hearingsData);
+    }, [hearingsData, setCachedHearings]);
 
     useEffect(() => {
-        if (usersData && usersData.length > 0) setUsers(usersData);
-    }, [usersData]);
+        if (usersData && usersData.length > 0) setCachedUsers(usersData);
+    }, [usersData, setCachedUsers]);
 
     useEffect(() => {
-        if (commentsData && commentsData.length > 0) setComments(commentsData);
-    }, [commentsData]);
+        if (commentsData && commentsData.length > 0) setCachedComments(commentsData);
+    }, [commentsData, setCachedComments]);
 
-    const announcements: any[] = [];
-    const loadingAnnouncements = false;
+    useEffect(() => {
+        if (announcementsData && announcementsData.length > 0) setCachedAnnouncements(announcementsData);
+    }, [announcementsData, setCachedAnnouncements]);
+
+    // Derived values from cache or fresh data
+    const hearings = (hearingsData && hearingsData.length > 0) ? hearingsData : cachedHearings;
+    const users = (usersData && usersData.length > 0) ? usersData : cachedUsers;
+    const comments = (commentsData && commentsData.length > 0) ? commentsData : cachedComments;
+    const announcements = (announcementsData && announcementsData.length > 0) ? announcementsData : cachedAnnouncements;
+
+    const totalViewers = (Array.isArray(hearings) ? hearings : []).reduce((sum, h) => sum + (h.viewers || 0), 0);
 
     // Mutations
     const updateHearingStatusMutation = useUpdateHearingMutation();
@@ -154,8 +167,10 @@ export default function AdminDashboard() {
         { id: "overview", label: "Overview", icon: LayoutDashboard },
         { id: "hearings", label: "Hearings", icon: Radio },
         { id: "users", label: "Users", icon: Users },
+        { id: "peoples_view", label: "People's View", icon: Users },
+        { id: "sentiment", label: "Sentiment", icon: TrendingUp },
+        { id: "insights", label: "Insights", icon: FileText },
         { id: "announcements", label: "Posts", icon: Bell },
-        { id: "analytics", label: "Analytics", icon: BarChart3 },
     ];
 
     return (
@@ -243,7 +258,7 @@ export default function AdminDashboard() {
                         <>
                             {activeTab === "overview" && (
                                 <div className="space-y-8">
-                                    <div className="grid gap-6 md:grid-cols-3">
+                                    <div className="grid gap-6 md:grid-cols-4">
                                         <div className="group rounded-xl border border-border bg-card p-6 shadow-card transition-all hover:shadow-elevated">
                                             <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                                                 <Radio className="h-5 w-5" />
@@ -255,7 +270,7 @@ export default function AdminDashboard() {
                                             <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
                                                 <Users className="h-5 w-5" />
                                             </div>
-                                            <div className="text-sm font-medium text-muted-foreground">Civil Participants</div>
+                                            <div className="text-sm font-medium text-muted-foreground">Participants</div>
                                             <div className="mt-1 text-3xl font-bold">{(Array.isArray(users) ? users : []).length}</div>
                                         </div>
                                         <div className="group rounded-xl border border-border bg-card p-6 shadow-card transition-all hover:shadow-elevated">
@@ -264,6 +279,20 @@ export default function AdminDashboard() {
                                             </div>
                                             <div className="text-sm font-medium text-muted-foreground">Total Comments</div>
                                             <div className="mt-1 text-3xl font-bold">{(Array.isArray(comments) ? comments : []).length}</div>
+                                        </div>
+                                        <div className="group rounded-xl border border-border bg-card p-6 shadow-card transition-all hover:shadow-elevated">
+                                            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-info/10 text-info">
+                                                <Users className="h-5 w-5" />
+                                            </div>
+                                            <div className="text-sm font-medium text-muted-foreground">Total Viewers</div>
+                                            <div className="mt-1 text-3xl font-bold">{totalViewers.toLocaleString()}</div>
+                                        </div>
+                                        <div className="group rounded-xl border border-border bg-card p-6 shadow-card transition-all hover:shadow-elevated">
+                                            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-foreground">
+                                                <BarChart3 className="h-5 w-5" />
+                                            </div>
+                                            <div className="text-sm font-medium text-muted-foreground">Total Hearings</div>
+                                            <div className="mt-1 text-3xl font-bold">{(Array.isArray(hearings) ? hearings : []).length}</div>
                                         </div>
                                     </div>
 
@@ -548,28 +577,40 @@ export default function AdminDashboard() {
                                 </div>
                             )}
 
-                            {activeTab === "analytics" && (
+                            {activeTab === "peoples_view" && (
+                                <AdminPeoplesView />
+                            )}
+
+                            {activeTab === "sentiment" && (
                                 <div className="space-y-6">
                                     <div className="grid gap-4 md:grid-cols-4">
                                         <div className="rounded-lg border border-border bg-card p-4">
                                             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Comments</p>
-                                            <p className="text-2xl font-bold mt-1">{comments.length}</p>
+                                            <p className="text-2xl font-bold mt-1">{(Array.isArray(comments) ? comments : []).length}</p>
                                         </div>
                                         <div className="rounded-lg border border-border bg-card p-4">
                                             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Positive Sentiment</p>
-                                            <p className="text-2xl font-bold mt-1 text-success">{comments.filter(c => c.sentiment === 'positive').length}</p>
+                                            <p className="text-2xl font-bold mt-1 text-success">{(Array.isArray(comments) ? comments : []).filter(c => c.sentiment === 'positive').length}</p>
                                         </div>
                                         <div className="rounded-lg border border-border bg-card p-4">
                                             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Negative Sentiment</p>
-                                            <p className="text-2xl font-bold mt-1 text-destructive">{comments.filter(c => c.sentiment === 'negative').length}</p>
+                                            <p className="text-2xl font-bold mt-1 text-destructive">{(Array.isArray(comments) ? comments : []).filter(c => c.sentiment === 'negative').length}</p>
+                                        </div>
+                                        <div className="rounded-lg border border-border bg-card p-4">
+                                            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Neutral Sentiment</p>
+                                            <p className="text-2xl font-bold mt-1 text-info">{(Array.isArray(comments) ? comments : []).filter(c => c.sentiment === 'neutral' || !c.sentiment).length}</p>
                                         </div>
                                         <div className="rounded-lg border border-border bg-card p-4">
                                             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Registered Citizens</p>
-                                            <p className="text-2xl font-bold mt-1">{users.length}</p>
+                                            <p className="text-2xl font-bold mt-1">{(Array.isArray(users) ? users : []).length}</p>
                                         </div>
                                     </div>
                                     <SentimentCharts />
                                 </div>
+                            )}
+
+                            {activeTab === "insights" && (
+                                <AdminInsights />
                             )}
                         </>
                     )}

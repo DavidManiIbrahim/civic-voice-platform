@@ -6,37 +6,38 @@ import { Radio, Users, MessageSquare, TrendingUp, ArrowRight } from "lucide-reac
 import { Link } from "react-router-dom";
 import heroImage from "/images/PARLIAMENT-4-1-678x381.jpg";
 import { supabase } from "@/integrations/supabase/client";
-import { useHearings, useComments } from "@/hooks/useData";
+import { useHearings, useComments, useAnnouncements } from "@/hooks/useData";
 import { useAuth } from "@/hooks/useAuth";
 import LandingPage from "@/components/LandingPage";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 export default function Index() {
   const { user, loading } = useAuth();
-  const [cachedHearings, setCachedHearings] = useLocalStorage<any[]>("app:hearings-cache", []);
-  const [cachedComments, setCachedComments] = useLocalStorage<any[]>("app:comments-cache", []);
+  const [cachedHearings, setCachedHearings] = useLocalStorage<any[]>("app:hearings", []);
+  const [cachedComments, setCachedComments] = useLocalStorage<any[]>("app:comments", []);
+  const [cachedAnnouncements, setCachedAnnouncements] = useLocalStorage<any[]>("app:announcements", []);
 
   const { data: hearingsData = [] } = useHearings();
   const { data: commentsData = [] } = useComments();
+  const { data: announcementsData = [] } = useAnnouncements();
 
-  const [hearings, setHearings] = useState<any[]>(cachedHearings);
-  const [comments, setComments] = useState<any[]>(cachedComments);
+  // Unified sync effects - only update when data actually arrives from DB
+  useEffect(() => {
+    if (hearingsData && hearingsData.length > 0) setCachedHearings(hearingsData);
+  }, [hearingsData, setCachedHearings]);
 
   useEffect(() => {
-    if (hearingsData) {
-      setHearings(hearingsData);
-      setCachedHearings(hearingsData);
-    }
-  }, [hearingsData]);
+    if (commentsData && commentsData.length > 0) setCachedComments(commentsData);
+  }, [commentsData, setCachedComments]);
 
   useEffect(() => {
-    if (commentsData) {
-      setComments(commentsData);
-      setCachedComments(commentsData);
-    }
-  }, [commentsData]);
+    if (announcementsData && announcementsData.length > 0) setCachedAnnouncements(announcementsData);
+  }, [announcementsData, setCachedAnnouncements]);
 
-  const announcements: any[] = [];
+  // Use the cached values for rendering to ensure instant UI + eventual consistency
+  const hearings = hearingsData.length > 0 ? hearingsData : cachedHearings;
+  const comments = commentsData.length > 0 ? commentsData : cachedComments;
+  const announcements = announcementsData.length > 0 ? announcementsData : cachedAnnouncements;
 
   if (loading && !user) {
     return (

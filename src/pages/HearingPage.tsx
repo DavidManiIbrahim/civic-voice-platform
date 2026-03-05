@@ -9,12 +9,16 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useViewerCount } from "@/hooks/useViewerCount";
+import { useAuth } from "@/hooks/useAuth";
+import { useTrackInteractionMutation } from "@/hooks/useData";
 
 
 export default function HearingPage() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [hearing, setHearing] = useState<any>(null);
   const [recentlyViewed, setRecentlyViewed] = useLocalStorage<Array<{ id: string; title: string; timestamp: number }>>("app:recently-viewed-hearings", []);
+  const trackInteraction = useTrackInteractionMutation();
 
   useEffect(() => {
     const query = supabase.from("hearings").select("*");
@@ -39,6 +43,35 @@ export default function HearingPage() {
 
   const hearingId = id || hearing?.id || "";
   const liveViewers = useViewerCount(hearingId || undefined);
+
+  useEffect(() => {
+    if (!hearingId) return;
+
+    const sessionsViews = JSON.parse(sessionStorage.getItem("app:session-viewed-hearings") || "[]");
+
+    if (!sessionsViews.includes(hearingId)) {
+      // Direct update for total viewers (historical)
+      supabase.from("hearings")
+        .select("viewers")
+        .eq("id", hearingId as any)
+        .single()
+        .then(({ data }) => {
+          const current = (data as any)?.viewers || 0;
+          supabase.from("hearings")
+            .update({ viewers: current + 1 } as any)
+            .eq("id", hearingId as any)
+            .then(() => {
+              sessionStorage.setItem("app:session-viewed-hearings", JSON.stringify([...sessionsViews, hearingId]));
+            });
+        });
+    }
+  }, [hearingId]);
+
+  useEffect(() => {
+    if (user && hearingId) {
+      trackInteraction.mutate({ userId: user.id, hearingId, type: "watched" });
+    }
+  }, [user, hearingId]);
 
   const getEmbedUrl = (url: string) => {
     if (!url) return "";
