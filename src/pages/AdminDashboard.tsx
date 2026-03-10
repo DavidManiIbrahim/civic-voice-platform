@@ -560,7 +560,7 @@ export default function AdminDashboard() {
                                         </div>
                                     ) : (
                                         announcements.map(post => (
-                                            <div key={post.id} className="rounded-xl border border-border bg-card p-6 shadow-card flex gap-6">
+                                            <div key={post.id} className="rounded-xl border border-border bg-card p-4 sm:p-6 shadow-card flex flex-col sm:flex-row gap-4 sm:gap-6">
                                                 <div className="flex-1">
                                                     <div className="mb-2 flex items-center gap-2">
                                                         <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${post.is_published ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'
