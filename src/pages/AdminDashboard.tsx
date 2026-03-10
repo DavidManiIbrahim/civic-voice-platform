@@ -603,7 +603,7 @@ export default function AdminDashboard() {
 
                             {activeTab === "sentiment" && (
                                 <div className="space-y-6">
-                                    <div className="grid gap-4 md:grid-cols-4">
+                                    <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
                                         <div className="rounded-lg border border-border bg-card p-4">
                                             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Comments</p>
                                             <p className="text-2xl font-bold mt-1">{(Array.isArray(comments) ? comments : []).length}</p>
