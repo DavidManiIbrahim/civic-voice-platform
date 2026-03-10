@@ -192,7 +192,7 @@ export function useCreateAnnouncementMutation() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (newAnnouncement: any) => {
-            const { error } = await supabase.from("announcements").insert([newAnnouncement] as any);
+            const { error } = await (supabase as any).from("announcements").insert([newAnnouncement]);
             if (error) throw error;
         },
         onSuccess: () => {
