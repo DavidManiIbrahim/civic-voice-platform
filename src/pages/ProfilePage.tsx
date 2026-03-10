@@ -111,7 +111,7 @@ export default function ProfilePage() {
                         />
                     </div>
                     <div>
-                        <h1 className="font-display text-3xl font-bold text-foreground">{profile?.display_name || "Citizen"}</h1>
+                        <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground">{profile?.display_name || "Citizen"}</h1>
                         <p className="text-muted-foreground">{user.email}</p>
                         <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                             <Shield className="h-3 w-3" />
