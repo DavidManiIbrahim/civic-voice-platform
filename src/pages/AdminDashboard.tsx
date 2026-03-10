@@ -572,7 +572,7 @@ export default function AdminDashboard() {
                                                     <h3 className="text-xl font-bold mb-2">{post.title}</h3>
                                                     <p className="text-muted-foreground text-sm line-clamp-2">{post.content}</p>
                                                 </div>
-                                                <div className="flex flex-col gap-2">
+                                                <div className="flex flex-row sm:flex-col gap-2">
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
