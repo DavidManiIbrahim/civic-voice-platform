@@ -112,8 +112,8 @@ async function fetchViaTimedText(videoId: string): Promise<Array<{ start: number
 async function fetchCaptions(videoId: string): Promise<Array<{ start: number; text: string }>> {
   console.log(`Fetching captions for video: ${videoId}`);
 
-  console.log("Strategy 1: Third-party transcript API...");
-  let captions = await fetchViaTranscriptApi(videoId);
+  console.log("Strategy 1: youtube-transcript-plus...");
+  let captions = await fetchViaTranscriptPlus(videoId);
   if (captions?.length) { console.log(`Strategy 1 succeeded: ${captions.length} segments`); return captions; }
 
   console.log("Strategy 2: InnerTube API...");
