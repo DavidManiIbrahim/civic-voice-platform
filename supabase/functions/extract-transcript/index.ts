@@ -1,19 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { fetchTranscript } from "https://esm.sh/youtube-transcript-plus@1.0.5";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-
-function extractVideoId(url: string): string | null {
-  const normalized = url.replace("m.youtube.com", "youtube.com");
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|live\/|shorts\/)([^#&?]*).*/;
-  const match = normalized.match(regExp);
-  if (match && match[2].trim().length === 11) return match[2].trim();
-  return null;
-}
 
 function formatTimestamp(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -23,135 +14,32 @@ function formatTimestamp(seconds: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-// Strategy 1: youtube-transcript-plus (handles rate limiting better)
-async function fetchViaTranscriptPlus(videoId: string): Promise<Array<{ start: number; text: string }> | null> {
-  try {
-    const result = await fetchTranscript(videoId, { lang: "en" });
-    if (result && Array.isArray(result) && result.length > 0) {
-      return result.map((item: any) => ({
-        start: (item.offset || item.start || 0) / 1000,
-        text: (item.text || "").trim(),
-      })).filter((c: any) => c.text);
-    }
-    return null;
-  } catch (e) {
-    console.error("youtube-transcript-plus error:", e);
-    return null;
-  }
-}
-
-// Strategy 2: InnerTube API with WEB_EMBEDDED_PLAYER client
-async function fetchViaInnerTube(videoId: string): Promise<Array<{ start: number; text: string }> | null> {
-  try {
-    const resp = await fetch("https://www.youtube.com/youtubei/v1/player", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        videoId,
-        context: {
-          client: {
-            clientName: "WEB_EMBEDDED_PLAYER",
-            clientVersion: "1.20240101.00.00",
-            hl: "en",
-          },
-        },
-      }),
-    });
-    if (!resp.ok) { await resp.text(); return null; }
-    const data = await resp.json();
-    const tracks = data?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
-    if (!tracks?.length) return null;
-
-    const track = tracks.find((t: any) => t.languageCode === "en") || tracks[0];
-    if (!track?.baseUrl) return null;
-
-    const captionResp = await fetch(track.baseUrl + "&fmt=srv3");
-    if (!captionResp.ok) { await captionResp.text(); return null; }
-    const xml = await captionResp.text();
-    if (!xml.includes("<text")) return null;
-
-    const captionRegex = /<text[^>]*?start="([\d.]+)"[^>]*?>([\s\S]*?)<\/text>/g;
-    const captions: Array<{ start: number; text: string }> = [];
-    let m;
-    while ((m = captionRegex.exec(xml)) !== null) {
-      const text = m[2].replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
-        .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/<[^>]+>/g, "").trim();
-      if (text) captions.push({ start: parseFloat(m[1]), text });
-    }
-    return captions.length > 0 ? captions : null;
-  } catch (e) {
-    console.error("InnerTube error:", e);
-    return null;
-  }
-}
-
-// Strategy 3: Direct timedtext API
-async function fetchViaTimedText(videoId: string): Promise<Array<{ start: number; text: string }> | null> {
-  for (const kind of ["", "asr"]) {
-    try {
-      const url = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=en${kind ? `&kind=${kind}` : ""}&fmt=srv3`;
-      const resp = await fetch(url);
-      if (!resp.ok) { await resp.text(); continue; }
-      const xml = await resp.text();
-      if (!xml.includes("<text")) continue;
-
-      const captionRegex = /<text[^>]*?start="([\d.]+)"[^>]*?>([\s\S]*?)<\/text>/g;
-      const captions: Array<{ start: number; text: string }> = [];
-      let m;
-      while ((m = captionRegex.exec(xml)) !== null) {
-        const text = m[2].replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
-          .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/<[^>]+>/g, "").trim();
-        if (text) captions.push({ start: parseFloat(m[1]), text });
-      }
-      if (captions.length > 0) return captions;
-    } catch { /* next */ }
-  }
-  return null;
-}
-
-async function fetchCaptions(videoId: string): Promise<Array<{ start: number; text: string }>> {
-  console.log(`Fetching captions for video: ${videoId}`);
-
-  console.log("Strategy 1: youtube-transcript-plus...");
-  let captions = await fetchViaTranscriptPlus(videoId);
-  if (captions?.length) { console.log(`Strategy 1 succeeded: ${captions.length} segments`); return captions; }
-
-  console.log("Strategy 2: InnerTube API...");
-  captions = await fetchViaInnerTube(videoId);
-  if (captions?.length) { console.log(`Strategy 2 succeeded: ${captions.length} segments`); return captions; }
-
-  console.log("Strategy 3: Timedtext API...");
-  captions = await fetchViaTimedText(videoId);
-  if (captions?.length) { console.log(`Strategy 3 succeeded: ${captions.length} segments`); return captions; }
-
-  throw new Error("No captions found. The video may not have captions enabled, or all caption sources are unavailable. Try again later.");
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { hearingId, streamUrl } = await req.json();
-    if (!hearingId || !streamUrl) throw new Error("hearingId and streamUrl are required");
-
-    const videoId = extractVideoId(streamUrl);
-    if (!videoId) throw new Error("Could not extract YouTube video ID from URL");
-
-    const rawCaptions = await fetchCaptions(videoId);
+    const { hearingId, captions } = await req.json();
+    if (!hearingId) throw new Error("hearingId is required");
+    if (!captions || !Array.isArray(captions) || captions.length === 0) {
+      throw new Error("captions array is required (extracted client-side)");
+    }
 
     // Group into ~30s segments
     const segments: Array<{ start: number; text: string }> = [];
-    let currentSegment = { start: rawCaptions[0].start, texts: [rawCaptions[0].text] };
-    for (let i = 1; i < rawCaptions.length; i++) {
-      const caption = rawCaptions[i];
-      if (caption.start - currentSegment.start > 30) {
+    let currentSegment = { start: captions[0].start || 0, texts: [captions[0].text] };
+    for (let i = 1; i < captions.length; i++) {
+      const caption = captions[i];
+      const captionStart = caption.start || 0;
+      if (captionStart - currentSegment.start > 30) {
         segments.push({ start: currentSegment.start, text: currentSegment.texts.join(" ") });
-        currentSegment = { start: caption.start, texts: [caption.text] };
+        currentSegment = { start: captionStart, texts: [caption.text] };
       } else {
         currentSegment.texts.push(caption.text);
       }
     }
     segments.push({ start: currentSegment.start, text: currentSegment.texts.join(" ") });
+
+    console.log(`Processing ${captions.length} captions into ${segments.length} segments`);
 
     // AI processing
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
