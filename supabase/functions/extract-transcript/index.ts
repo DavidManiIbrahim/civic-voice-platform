@@ -23,21 +23,19 @@ function formatTimestamp(seconds: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-// Strategy 1: Free third-party transcript API
-async function fetchViaTranscriptApi(videoId: string): Promise<Array<{ start: number; text: string }> | null> {
+// Strategy 1: youtube-transcript-plus (handles rate limiting better)
+async function fetchViaTranscriptPlus(videoId: string): Promise<Array<{ start: number; text: string }> | null> {
   try {
-    const resp = await fetch(`https://youtube-transcript-api-tau-one.vercel.app/api/transcript?video_id=${videoId}&lang=en`);
-    if (!resp.ok) { await resp.text(); return null; }
-    const data = await resp.json();
-    if (data?.transcript && Array.isArray(data.transcript) && data.transcript.length > 0) {
-      return data.transcript.map((item: any) => ({
-        start: item.start || item.offset / 1000 || 0,
+    const result = await fetchTranscript(videoId, { lang: "en" });
+    if (result && Array.isArray(result) && result.length > 0) {
+      return result.map((item: any) => ({
+        start: (item.offset || item.start || 0) / 1000,
         text: (item.text || "").trim(),
       })).filter((c: any) => c.text);
     }
     return null;
   } catch (e) {
-    console.error("Transcript API error:", e);
+    console.error("youtube-transcript-plus error:", e);
     return null;
   }
 }
